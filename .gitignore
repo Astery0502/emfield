@@ -1,0 +1,24 @@
+# directories
+.ipynb_checkpoints/
+__pycache__/
+/figs/
+.vscode/
+
+# files with extensions
+*.j
+*.h5
+*.csv
+*.bin
+*.dat
+*.tar.gz
+
+# all loc[al] files
+loc*
+
+# spared
+*bak.*
+get_field.py
+
+# raw data files not remained
+/data/*.csv
+/data/*.h5
