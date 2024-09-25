@@ -2,8 +2,9 @@ import struct
 import copy
 import numpy as np
 import math
+from typing import Union, Iterable
 
-from morton_amr import *
+from .morton_amr import *
 
 # Size of basic types (in bytes)
 SIZE_LOGICAL = 4
@@ -154,6 +155,7 @@ def get_tree_info(istream):
     )
     return block_lvls, block_ixs, block_offsets
 
+# get all data from a single block containging the ghost cells info and ixG^L block data
 def get_single_block_data(istream, offset):
 
     header = get_header(istream)
@@ -179,6 +181,36 @@ def get_single_block_data(istream, offset):
         assert(istream.tell() == offsets[j+1]), f"Block data is not read correctly, from {offset}, {istream.tell()} != {offsets[j+1]}"
 
     return ghostcells, block_data
+
+def get_single_block_field_data(istream, offset, block_shape, ndim, field_idx:int):
+    """Retrieve field data from a grid.
+
+    Parameters
+    ----------
+    istream: file descriptor (open binary file with read access)
+
+    grid : yt.frontends.amrvac.data_structures.AMRVACGrid
+        The grid from which data is to be read.
+    field : str
+        A field name.
+
+    Returns
+    -------
+    data : np.ndarray
+        A 3D array of float64 type representing grid data.
+
+    """
+    count = np.prod(block_shape)
+    byte_size_field = count * 8  # size of a double
+
+    istream.seek(offset + byte_size_field * field_idx + 2*ndim*SIZE_INT)
+    data = np.fromfile(istream, "=f8", count=count)
+    data.shape = block_shape[::-1] # reverse the block_nx sequence
+    data = data.T                  # for fortran ordering correction
+    # Always convert data to 3D, as grid.ActiveDimensions is always 3D
+    while len(data.shape) < 3:
+        data = data[..., np.newaxis]
+    return data
 
 def check_tree(fi):
     """
@@ -462,7 +494,7 @@ def create_new_tree(fi, nx, ny, nz):
 
     return levels_new, indices_new, offsets_new
 
-def check_new_tree(fi, nx, ny, nz):
+def check_new_tree(fi, nx:int, ny:int, nz:int):
 
     header = get_header(fi)
     tree = get_tree_info(fi)

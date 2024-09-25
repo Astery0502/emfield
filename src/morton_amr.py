@@ -24,11 +24,14 @@ def interleave_bits(ign:Iterable):
         
     return answer
 
-def read_lev1_indices_from_forest(header, forest):
+def read_lev1_indices_from_forest(header, forest, numblocks=None):
 
-    domain_nx = header['domain_nx']
-    block_nx = header['block_nx']
-    numblocks = np.array(domain_nx / block_nx, dtype=int)
+    if numblocks is None:
+        domain_nx = header['domain_nx']
+        block_nx = header['block_nx']
+        numblocks = np.array(domain_nx / block_nx, dtype=int)
+    else:
+        numblocks = np.array(numblocks, dtype=int)
 
     lev1_indices_forest = [] # in forest, all lev1 indices; for writing the new forest bool list
 
@@ -55,9 +58,9 @@ def read_lev1_indices_from_forest(header, forest):
     
     return lev1_indices_forest
 
-def read_lev1_indices_from_tree(header, forest):
+def read_lev1_indices_from_tree(header, forest, numblocks=None):
 
-    lev1_indices = read_lev1_indices_from_forest(header, forest)
+    lev1_indices = read_lev1_indices_from_forest(header, forest, numblocks)
 
     lev1_indices_leaf = [] # in leafs, the lev1 block posiiton would be; for indicating the new tree leaf blocks sequence
     j = 0
