@@ -5,26 +5,23 @@ __pycache__/
 .vscode/
 build/
 
-# compilation files not included
+# cython compilation files not included
 *.pyd
+*.so
 *.c
+*.cpp
 
-# files with extensions
+# big files extensions excluded 
 *.j
 *.h5
 *.csv
 *.bin
 *.dat
 *.tar.gz
-*.html
 
-# all loc[al] files
+# all loc[al] files for local testing
 loc*
 
 # spared
 *bak.*
 get_field.py
-
-# raw data files not remained
-/data/*.csv
-/data/*.h5

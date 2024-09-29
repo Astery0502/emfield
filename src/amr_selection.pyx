@@ -1,6 +1,7 @@
 import numpy as np
 cimport numpy as np
 
+# python ./setup.py build_ext --inplace
 cdef np.int64_t interleave_bits(np.ndarray[np.int32_t, ndim=1] ign):
     cdef np.int64_t value = 0
     cdef size_t ndim = len(ign)
@@ -169,7 +170,7 @@ def find_surrounding_cells(np.ndarray[np.float64_t, ndim=2] points,
         leaf_idx = leaf_indices[i]
         x0, y0, z0 = nearest_cells[i]
 
-        cells = np.array([[i,j,k] for i in range(x0, x0+2) for j in range(y0, y0+2) for k in range(z0, z0+2)]).astype(int)
+        cells = np.array([[i,j,k] for i in range(x0, x0+2) for j in range(y0, y0+2) for k in range(z0, z0+2)]).astype(np.int32)
 
         count = 0
         for cell in cells:
@@ -177,7 +178,7 @@ def find_surrounding_cells(np.ndarray[np.float64_t, ndim=2] points,
             assert(np.all(cell >= 0) and np.all(cell <= block_nx+1)), f"Cell out of bounds: {cell}"
 
             # loc to indicate in which side the cell beyond the block; -1 means minus, 0 means inside; 1 means plus
-            loc = np.zeros(3).astype(int)
+            loc = np.zeros(3).astype(np.int32)
             # mask1 to show plus situation; mask2 to show minus situation; loc here only serves as np.zeros(3)
             mask1 = (cell > block_nx)
             mask2 = (cell == loc)
@@ -200,7 +201,7 @@ def find_surrounding_cells(np.ndarray[np.float64_t, ndim=2] points,
                 loc = np.where(mask2, -1, loc)
 
                 # find cell lev1 block index in lev1 list
-                cell_lev1_idx = np.floor(cell_lev1).astype(int)
+                cell_lev1_idx = np.floor(cell_lev1).astype(np.int32)
                 # modify the max edge situation
                 block_index_lev1_new = lookup_lev1[tuple(cell_lev1_idx)]
 
@@ -274,7 +275,7 @@ def fill_coordinates_field_linear(np.ndarray[np.float64_t, ndim=3] surrounding_c
         
         # read 1. 8 cells 2. 8 leaf indices 3. linear interpolation factor
         cells = coords[:8,:3]
-        leaf_idx = coords[:8,3].astype(int)
+        leaf_idx = coords[:8,3].astype(np.int32)
         f1,f2,f3 = coords[-1][:3]
         factors = np.array([(1-f1)*(1-f2)*(1-f3), (1-f1)*(1-f2)*f3, (1-f1)*f2*(1-f3), (1-f1)*f2*f3,
                     f1*(1-f2)*(1-f3), f1*(1-f2)*f3, f1*f2*(1-f3), f1*f2*f3])
@@ -288,13 +289,13 @@ def fill_coordinates_field_linear(np.ndarray[np.float64_t, ndim=3] surrounding_c
 
             assert all_integers or all_half, f"Array elements: {cell} are not integers or half integers"
 
-            cell_floor = np.floor(cell).astype(int)-1
+            cell_floor = np.floor(cell).astype(np.int32)-1
         
             if all_integers:
                 values[j] = raw_field_data[leaf_idx[j]][cell_floor[0], cell_floor[1], cell_floor[2]]
             else:
                 cells_around = np.array([[i,j,k] for i in range(cell_floor[0],cell_floor[0]+2) \
-                    for j in range(cell_floor[1],cell_floor[1]+2) for k in range(cell_floor[2],cell_floor[2]+2)])
+                    for j in range(cell_floor[1],cell_floor[1]+2) for k in range(cell_floor[2],cell_floor[2]+2)]).astype(np.int32)
 
                 assert(cells_around.shape[0] == 8), "Surrounding cells are not 8"
 

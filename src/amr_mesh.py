@@ -18,14 +18,14 @@ class AMRMesh:
         with open(datfile, 'rb') as f:
             header = get_header(f)
 
-            self.ndim = header['ndim']
+            self.ndim = header['ndim'].astype(np.int32)
             self.domain_nx = header['domain_nx']
-            self.block_nx = header['block_nx']
+            self.block_nx = header['block_nx'].astype(np.int32)
             self.xmin = header['xmin']
             self.xmax = header['xmax']
-            numblock = (header['domain_nx'] / header['block_nx']).astype(int)
+            numblock = (header['domain_nx'] / header['block_nx']).astype(np.int32)
             assert (all(numblock % 1 == 0)), "Number of blocks must be integer"
-            self.nblock_nx = numblock.astype('int')
+            self.nblock_nx = numblock.astype(np.int32)
             self.wnames = header['w_names']
 
             # forest and tree information
@@ -35,7 +35,8 @@ class AMRMesh:
             self.leaf_indices = tree[1]
             self.block_offsets = tree[2]
             # level 1 block position in leaf about array
-            self.lev1_idx_tree = read_lev1_indices_from_tree(header, self.forest)
+            self.lev1_idx_tree = np.asarray(read_lev1_indices_from_tree(header, self.forest), 
+                                            dtype=np.int32)
 
             # block origin and block size in lev1 block length unit
             self.block_origin_lev1 = np.array((self.leaf_indices-1.0)/np.power(2, self.leaf_levels[:, np.newaxis]-1))
@@ -92,7 +93,7 @@ class UniformMesh:
         self.am = am
         self.xmin = np.asarray(region[::2])
         self.xmax = np.asarray(region[1::2])
-        self.nx = np.asarray(nx).astype(int)
+        self.nx = np.asarray(nx).astype(np.int32)
 
         assert(len(self.xmin) == self.am.ndim == len(self.nx)), "Region dimension mismatch"
 
@@ -130,13 +131,13 @@ class UniformMesh:
         """
         Find the leaf index for each uniform cell
         """
-        leaf_indices = np.zeros(self.coordinates.shape[0], dtype=int)
+        leaf_indices = np.zeros(self.coordinates.shape[0], dtype=np.int32)
 
-        block_lev1_idx = np.array([self.am.lookup_lev1[tuple(i)] for i in np.floor(self.coordinates).astype(int)])
+        block_lev1_idx = np.array([self.am.lookup_lev1[tuple(i)] for i in np.floor(self.coordinates).astype(int)]).astype(np.int32)
 
         find_leaf_indices(self.coordinates, 
                           block_lev1_idx,
-                          np.asarray(self.am.lev1_idx_tree),
+                          self.am.lev1_idx_tree,
                           self.am.block_origin_lev1,
                           self.am.dblevel,
                           leaf_indices
@@ -162,7 +163,7 @@ class UniformMesh:
         nearest_cells[:] = np.floor(self.coordinates_cell_idx)
 
         nearest_cells[nearest_cells == self.am.block_nx] -= 1
-        nearest_cells = nearest_cells.astype(int)
+        nearest_cells = nearest_cells.astype(np.int32)
         
         return nearest_cells
 
@@ -175,9 +176,9 @@ class UniformMesh:
         #                            self.am.block_nx, self.am.block_origin_lev1, self.am.dblevel,
         #                            self.am.lookup_lev1, np.asarray(self.am.lev1_idx_tree), surrounding_cells)
 
-        find_surrounding_cells(self.coordinates, self.leaf_indices, np.floor(self.coordinates_cell_idx+0.5).astype(int), 
+        find_surrounding_cells(self.coordinates, self.leaf_indices, np.floor(self.coordinates_cell_idx+0.5).astype(np.int32), 
                                    self.am.block_nx, self.am.block_origin_lev1, self.am.dblevel,
-                                   self.am.lookup_lev1, np.asarray(self.am.lev1_idx_tree), surrounding_cells)
+                                   self.am.lookup_lev1, self.am.lev1_idx_tree, surrounding_cells)
 
         return surrounding_cells
 
@@ -186,7 +187,7 @@ class UniformMesh:
         for i, coord in enumerate(self.coordinates):
 
             cells = self.surrounding_cells[i][:8, :3]
-            leaf_indices = self.surrounding_cells[i][:8, 3].astype(int)
+            leaf_indices = self.surrounding_cells[i][:8, 3].astype(np.int32)
             factors = self.surrounding_cells[i][8, :3]
 
 
